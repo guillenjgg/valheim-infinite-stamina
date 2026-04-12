@@ -416,3 +416,17 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Valheim / BepInEx
+BepInEx/
+plugins/
+
+# Built DLLs (optional — keep if you DON'T want binaries in repo)
+*.dll
+
+# Packaging / distribution
+dist/
+package/
+
+# Logs
+*.log
