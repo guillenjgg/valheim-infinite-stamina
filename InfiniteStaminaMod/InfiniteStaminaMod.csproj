@@ -17,7 +17,7 @@
     <DebugSymbols>false</DebugSymbols>
     <DebugType>none</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Dev\BepInEx\plugins\InfiniteStamina\</OutputPath>
+    <OutputPath>..\..\..\debug_builds\InfiniteStaminaMod\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\..\Documents\valheim_mods\release\InfiniteStaminaMod\</OutputPath>
+    <OutputPath>..\..\..\release\InfiniteStaminaMod\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -37,9 +37,11 @@
     </Reference>
     <Reference Include="assembly_utils_publicized">
       <HintPath>..\..\..\publicized_assemblies\assembly_utils_publicized.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="assembly_valheim_publicized">
       <HintPath>..\..\..\publicized_assemblies\assembly_valheim_publicized.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx">
       <HintPath>..\..\..\bepinex_mod_libs\BepInEx.dll</HintPath>
