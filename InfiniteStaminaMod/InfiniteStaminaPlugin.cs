@@ -1,18 +1,18 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
 using System;
 using UnityEngine;
 
 namespace InfiniteStaminaMod
 {
-    [BepInPlugin(ModGuid, ModName, ModVersion)]
-    [BepInProcess("valheim.exe")]
+    [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
     public class InfiniteStaminaPlugin : BaseUnityPlugin
     {
-        public const string ModGuid = "com.hex.infinitestamina";
-        public const string ModName = "Infinite Stamina";
-        public const string ModVersion = "1.0.0";
+        public const string PluginGuid = "com.hex.infinitestamina";
+        public const string PluginName = "Infinite Stamina";
+        public const string PluginVersion = "1.0.0";
 
         public static InfiniteStaminaPlugin Instance { get; private set; }
 
@@ -21,12 +21,16 @@ namespace InfiniteStaminaMod
         private ConfigEntry<bool> _modEnabled;
         private float _lastMessageTime;
         private static readonly KeyboardShortcut DefaultHotKey = new KeyboardShortcut(KeyCode.F7);
+        private const float MessageCooldown = 0.2f;
+
+        internal static ManualLogSource Log { get; private set; }
 
         public bool IsInfiniteStaminaEnabled => _modEnabled != null && _modEnabled.Value;
 
         private void Awake()
         {
             Instance = this;
+            Log = Logger;
 
             _toggleKey = Config.Bind(
                 "General",
@@ -42,10 +46,10 @@ namespace InfiniteStaminaMod
 
             _toggleKey.SettingChanged += OnToggleKeyChanged;
 
-            _harmony = new Harmony(ModGuid);
+            _harmony = new Harmony(PluginGuid);
             _harmony.PatchAll();
 
-            Logger.LogInfo($"{ModName} {ModVersion} loaded.");
+            Log.LogInfo($"v{PluginVersion} loaded.");
         }
 
         private void Update()
@@ -55,24 +59,25 @@ namespace InfiniteStaminaMod
                 return;
             }
 
-            var player = Player.m_localPlayer;
-
-            if (IsShortcutPressedAllowingExtraKeys(_toggleKey.Value))
+            if (!IsShortcutPressedAllowingExtraKeys(_toggleKey.Value))
             {
-                _modEnabled.Value = !_modEnabled.Value;
-                bool isEnabled = _modEnabled.Value;
-
-                if (isEnabled)
-                {
-                    float missingStamina = player.GetMaxStamina() - player.GetStamina();
-                    if (missingStamina > 0f)
-                    {
-                        player.AddStamina(missingStamina);
-                    }
-                }
-
-                ShowStatus(isEnabled);
+                return;
             }
+
+            Player player = Player.m_localPlayer;
+            _modEnabled.Value = !_modEnabled.Value;
+            bool isEnabled = _modEnabled.Value;
+
+            if (isEnabled)
+            {
+                float missingStamina = player.GetMaxStamina() - player.GetStamina();
+                if (missingStamina > 0f)
+                {
+                    player.AddStamina(missingStamina);
+                }
+            }
+
+            ShowStatus(isEnabled);
         }
 
         private void OnDestroy()
@@ -82,9 +87,8 @@ namespace InfiniteStaminaMod
                 _toggleKey.SettingChanged -= OnToggleKeyChanged;
             }
 
-            Instance = null;
-
             _harmony?.UnpatchSelf();
+            Instance = null;
         }
 
         private bool IsGameActive()
@@ -94,7 +98,7 @@ namespace InfiniteStaminaMod
 
         private void ShowStatus(bool isEnabled)
         {
-            if (Time.time - _lastMessageTime < 0.2f)
+            if (Time.time - _lastMessageTime < MessageCooldown)
             {
                 return;
             }
@@ -105,7 +109,7 @@ namespace InfiniteStaminaMod
                 ? "Infinite Stamina: ENABLED"
                 : "Infinite Stamina: DISABLED";
 
-            Logger.LogInfo(message);
+            Log.LogInfo(message);
 
             if (MessageHud.instance != null)
             {
@@ -118,7 +122,7 @@ namespace InfiniteStaminaMod
         private void OnToggleKeyChanged(object sender, EventArgs e)
         {
             string message = $"Hotkey updated -> {_toggleKey.Value}";
-            Logger.LogInfo(message);
+            Log.LogInfo(message);
 
             if (MessageHud.instance != null)
             {
