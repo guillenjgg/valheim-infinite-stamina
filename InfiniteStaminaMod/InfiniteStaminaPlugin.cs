@@ -10,11 +10,11 @@ namespace InfiniteStaminaMod
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
     public class InfiniteStaminaPlugin : BaseUnityPlugin
     {
-        public const string PluginGuid = "com.hex.infinitestamina";
-        public const string PluginName = "Infinite Stamina";
-        public const string PluginVersion = "1.0.0";
+        private const string PluginGuid = "com.hex.infinitestamina";
+        private const string PluginName = "InfiniteStamina";
+        private const string PluginVersion = "1.0.0";
 
-        public static InfiniteStaminaPlugin Instance { get; private set; }
+        internal static InfiniteStaminaPlugin Instance { get; private set; }
 
         private Harmony _harmony;
         private ConfigEntry<KeyboardShortcut> _toggleKey;
@@ -25,7 +25,7 @@ namespace InfiniteStaminaMod
 
         internal static ManualLogSource Log { get; private set; }
 
-        public bool IsInfiniteStaminaEnabled => _modEnabled != null && _modEnabled.Value;
+        internal bool IsInfiniteStaminaEnabled => _modEnabled != null && _modEnabled.Value;
 
         private void Awake()
         {
