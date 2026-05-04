@@ -20,7 +20,7 @@ namespace InfiniteStaminaMod
         private ConfigEntry<KeyboardShortcut> _toggleKey;
         private ConfigEntry<bool> _modEnabled;
         private float _lastMessageTime;
-        private static readonly KeyboardShortcut DefaultHotKey = new KeyboardShortcut(KeyCode.F7);
+        private static readonly KeyboardShortcut DefaultHotKey = new KeyboardShortcut(KeyCode.F6);
         private const float MessageCooldown = 0.2f;
 
         internal static ManualLogSource Log { get; private set; }
