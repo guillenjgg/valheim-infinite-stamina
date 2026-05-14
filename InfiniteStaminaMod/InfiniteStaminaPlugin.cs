@@ -11,14 +11,15 @@ namespace InfiniteStaminaMod
     public class InfiniteStaminaPlugin : BaseUnityPlugin
     {
         private const string PluginGuid = "com.hex.infinitestamina";
-        private const string PluginName = "InfiniteStamina";
-        private const string PluginVersion = "1.0.0";
+        private const string PluginName = "HexInfiniteStamina";
+        private const string PluginVersion = "1.1.0";
 
         internal static InfiniteStaminaPlugin Instance { get; private set; }
 
         private Harmony _harmony;
         private ConfigEntry<KeyboardShortcut> _toggleKey;
         private ConfigEntry<bool> _modEnabled;
+        private ConfigEntry<bool> _enableOnlyWhileRunning;
         private float _lastMessageTime;
         private static readonly KeyboardShortcut DefaultHotKey = new KeyboardShortcut(KeyCode.F6);
         private const float MessageCooldown = 0.2f;
@@ -26,6 +27,7 @@ namespace InfiniteStaminaMod
         internal static ManualLogSource Log { get; private set; }
 
         internal bool IsInfiniteStaminaEnabled => _modEnabled != null && _modEnabled.Value;
+        internal bool IsEnableOnlyWhileRunning => _enableOnlyWhileRunning != null && _enableOnlyWhileRunning.Value;
 
         private void Awake()
         {
@@ -41,8 +43,14 @@ namespace InfiniteStaminaMod
             _modEnabled = Config.Bind(
                 "General",
                 "Enabled",
-                false,
+                true,
                 "Whether infinite stamina is enabled.");
+
+            _enableOnlyWhileRunning = Config.Bind(
+                "General",
+                "EnableOnlyWhileRunning",
+                false,
+                "If true, stamina is only infinite while the player is running.");
 
             _toggleKey.SettingChanged += OnToggleKeyChanged;
 
@@ -87,7 +95,12 @@ namespace InfiniteStaminaMod
                 _toggleKey.SettingChanged -= OnToggleKeyChanged;
             }
 
+
             _harmony?.UnpatchSelf();
+            _harmony = null;
+
+            Log.LogInfo($"v{PluginVersion} unloaded.");
+
             Instance = null;
         }
 
