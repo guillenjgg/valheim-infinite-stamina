@@ -1,0 +1,9 @@
+{
+  "name": "HexInfiniteStamina",
+  "version_number": "1.1.0",
+  "website_url": "https://github.com/guillenjgg/valheim-infinite-stamina",
+  "description": "Toggle infinite stamina with a hotkey. Never run out of stamina again.",
+  "dependencies": [
+    "denikson-BepInExPack_Valheim-5.4.2333"
+  ]
+}
