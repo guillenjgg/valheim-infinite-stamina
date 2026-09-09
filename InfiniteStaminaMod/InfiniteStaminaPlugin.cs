@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using System;
+using System.Reflection;
 using UnityEngine;
 
 namespace InfiniteStaminaMod
@@ -12,7 +13,7 @@ namespace InfiniteStaminaMod
     {
         private const string PluginGuid = "com.hex.infinitestamina";
         private const string PluginName = "HexInfiniteStamina";
-        private const string PluginVersion = "1.1.0";
+        private const string PluginVersion = "1.1.1";
 
         internal static InfiniteStaminaPlugin Instance { get; private set; }
 
@@ -54,8 +55,9 @@ namespace InfiniteStaminaMod
 
             _toggleKey.SettingChanged += OnToggleKeyChanged;
 
+            Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony = new Harmony(PluginGuid);
-            _harmony.PatchAll();
+            _harmony.PatchAll(assembly);
 
             Log.LogInfo($"v{PluginVersion} loaded.");
         }
