@@ -92,6 +92,10 @@ EnableWhileRunning = false
 
 ## Multiplayer
 
-This mod is intended as a client-side quality-of-life mod.
+-Every client needs the mod installed
 
-Only players with the mod installed will receive infinite stamina behavior.
+## Support & Feedback
+https://discord.gg/wU2FXD94v4
+
+## Source Code
+https://github.com/guillenjgg/valheim-infinite-stamina

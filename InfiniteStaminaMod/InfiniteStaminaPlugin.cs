@@ -13,7 +13,7 @@ namespace InfiniteStaminaMod
     {
         private const string PluginGuid = "com.hex.infinitestamina";
         private const string PluginName = "HexInfiniteStamina";
-        private const string PluginVersion = "1.1.1";
+        private const string PluginVersion = "1.1.2";
 
         internal static InfiniteStaminaPlugin Instance { get; private set; }
 
