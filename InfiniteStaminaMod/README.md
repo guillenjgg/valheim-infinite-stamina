@@ -1,6 +1,6 @@
 # Infinite Stamina
 
-Press F6 to toggle the mod. Choose which activities use no stamina.
+Press F6 to toggle infinite stamina for every action. Enable activity filters if you only want it for certain activities.
 
 ## Installation
 
@@ -14,32 +14,35 @@ Edit `BepInEx/config/com.hex.infinitestamina.cfg`, or use Configuration Manager.
 
 ```ini
 [General]
-DebugLogging = true
+DebugLogging = false
 ModEnabled = true
 ToggleKey = F6
-NoRunningStaminaDrain = true
-NoSwimmingStaminaDrain = true
-NoEncumberedStaminaDrain = true
-NoBuildingStaminaDrain = true
-NoCultivatorStaminaDrain = true
-NoHoeStaminaDrain = true
-NoPickaxeStaminaDrain = true
+
+[Stamina Filters]
+OnlySelectedActivities = false
+NoRunningStaminaDrain = false
+NoSwimmingStaminaDrain = false
+NoEncumberedStaminaDrain = false
+NoBuildingStaminaDrain = false
+NoCultivatorStaminaDrain = false
+NoHoeStaminaDrain = false
+NoPickaxeStaminaDrain = false
 ```
 
-- `ModEnabled` is the master switch. Turn it off for normal stamina use.
-- While enabled, each activity follows its own setting: true means free stamina; false means normal cost.
+- `ModEnabled = false`: vanilla stamina for everything.
+- `ModEnabled = true`, `OnlySelectedActivities = false`: every action is free. Filter values are ignored.
+- `ModEnabled = true`, `OnlySelectedActivities = true`: only enabled Stamina Filters are free. Everything else uses vanilla stamina.
 - Building includes repairs and removing pieces. Pickaxes include mining.
-- Swimming has its own NoSwimmingStaminaDrain setting. Actions without a setting, such as jumping and dodging, behave like vanilla.
+- Activity filters start off. Enable OnlySelectedActivities, then choose your activities.
+- In filtered mode, unlisted actions such as jumping and dodging use vanilla stamina.
 - Changing an active stamina setting refills stamina. The bar hides while infinite stamina applies.
-- `DebugLogging` controls mod logs and stays first in Configuration Manager.
+- `DebugLogging` defaults to false and stays first in Configuration Manager.
 
-Old config keys migrate automatically. Existing choices are kept.
+Old settings migrate automatically. Saved choices are kept. New configs start with full infinite stamina, filters off, and logging off.
 
 ## Multiplayer
 
 Client-side only. No server installation needed.
-
-## Support & Source
 
 ## Support & Feedback
 [Discord](https://discord.gg/wU2FXD94v4)

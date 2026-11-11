@@ -54,6 +54,12 @@ namespace InfiniteStaminaMod.Patches
             }
 
             Plugin plugin = Plugin.Instance;
+
+            if (!plugin.OnlySelectedActivities.Value)
+            {
+                return true;
+            }
+
             PieceTable pieces = BuildPieces(player);
             if (pieces == null)
             {
@@ -101,8 +107,8 @@ namespace InfiniteStaminaMod.Patches
 
             Plugin plugin = Plugin.Instance;
             Skills.SkillType skill = ___m_weapon.m_shared.m_skillType;
-            if ((skill == Skills.SkillType.Farming && plugin.NoCultivatorStaminaDrain.Value) ||
-                (skill == Skills.SkillType.Pickaxes && plugin.NoPickaxeStaminaDrain.Value))
+            if ((skill == Skills.SkillType.Farming && (!plugin.OnlySelectedActivities.Value || plugin.NoCultivatorStaminaDrain.Value)) ||
+                (skill == Skills.SkillType.Pickaxes && (!plugin.OnlySelectedActivities.Value || plugin.NoPickaxeStaminaDrain.Value)))
             {
                 __result = 0f;
             }

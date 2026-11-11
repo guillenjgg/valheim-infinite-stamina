@@ -36,6 +36,11 @@ namespace InfiniteStaminaMod.Patches
                 return false;
             }
 
+            if (!plugin.OnlySelectedActivities.Value)
+            {
+                return true;
+            }
+
             bool protectedActivity = false;
 
             if (player.IsEncumbered())

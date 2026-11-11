@@ -33,7 +33,7 @@ namespace InfiniteStaminaMod.Patches
 
         private static bool IsFreeSwimming(Character character)
         {
-            return PlayerToolStaminaPatch.IsLocalPlayer(character as Player) && Plugin.Instance.ModEnabled.Value && Plugin.Instance.NoSwimmingStaminaDrain.Value;
+            return PlayerToolStaminaPatch.IsLocalPlayer(character as Player) && Plugin.Instance.ModEnabled.Value && (!Plugin.Instance.OnlySelectedActivities.Value || Plugin.Instance.NoSwimmingStaminaDrain.Value);
         }
 
         private static bool HaveSwimStamina(Character character, float stamina)

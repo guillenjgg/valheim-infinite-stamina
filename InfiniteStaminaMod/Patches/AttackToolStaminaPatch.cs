@@ -70,9 +70,9 @@ namespace InfiniteStaminaMod.Patches
             switch (weapon.m_shared.m_skillType)
             {
                 case Skills.SkillType.Farming:
-                    return Plugin.Instance.ModEnabled.Value && Plugin.Instance.NoCultivatorStaminaDrain.Value;
+                    return Plugin.Instance.ModEnabled.Value && (!Plugin.Instance.OnlySelectedActivities.Value || Plugin.Instance.NoCultivatorStaminaDrain.Value);
                 case Skills.SkillType.Pickaxes:
-                    return Plugin.Instance.ModEnabled.Value && Plugin.Instance.NoPickaxeStaminaDrain.Value;
+                    return Plugin.Instance.ModEnabled.Value && (!Plugin.Instance.OnlySelectedActivities.Value || Plugin.Instance.NoPickaxeStaminaDrain.Value);
                 default:
                     return null;
             }
