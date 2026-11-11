@@ -33,7 +33,7 @@ namespace InfiniteStaminaMod.Patches
 
         private static bool IsFreeRunning(Character character)
         {
-            return PlayerToolStaminaPatch.IsLocalPlayer(character as Player) && Plugin.Instance.ModEnabled.Value && Plugin.Instance.NoRunningStaminaDrain.Value;
+            return PlayerToolStaminaPatch.IsLocalPlayer(character as Player) && Plugin.Instance.ModEnabled.Value && (!Plugin.Instance.OnlySelectedActivities.Value || Plugin.Instance.NoRunningStaminaDrain.Value);
         }
 
         private static bool HaveRunStamina(Character character, float stamina)

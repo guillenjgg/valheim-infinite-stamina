@@ -49,7 +49,7 @@ namespace InfiniteStaminaMod.Patches
         {
             Plugin plugin = Plugin.Instance;
 
-            if (plugin == null || !plugin.ModEnabled.Value || !plugin.NoEncumberedStaminaDrain.Value)
+            if (plugin == null || !plugin.ModEnabled.Value || (plugin.OnlySelectedActivities.Value && !plugin.NoEncumberedStaminaDrain.Value))
             {
                 return drain;
             }

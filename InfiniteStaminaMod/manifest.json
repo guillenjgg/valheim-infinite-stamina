@@ -1,8 +1,8 @@
 {
   "name": "HexInfiniteStamina",
-  "version_number": "1.1.2",
+  "version_number": "1.1.3",
   "website_url": "https://discord.gg/wU2FXD94v4",
-  "description": "Toggle infinite stamina with a hotkey. Separate settings for running, swimming, building, farming, hoes, pickaxes, and encumbrance.",
+  "description": "Toggle infinite stamina for every action with a hotkey, or enable filters for running, swimming, building, farming, hoes, pickaxes, and encumbrance.",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2360"
   ]

@@ -14,7 +14,7 @@ namespace InfiniteStaminaMod
     {
         private const string PluginGuid = "com.hex.infinitestamina";
         private const string PluginName = "HexInfiniteStamina";
-        private const string PluginVersion = "1.1.2";
+        private const string PluginVersion = "1.1.3";
 
         private float _lastMessageTime;
         private static readonly KeyboardShortcut DefaultHotKey = new KeyboardShortcut(KeyCode.F6);
@@ -31,6 +31,7 @@ namespace InfiniteStaminaMod
         internal static Plugin Instance { get; private set; }
         internal ConfigEntry<KeyboardShortcut> ToggleKey;
         internal ConfigEntry<bool> ModEnabled;
+        internal ConfigEntry<bool> OnlySelectedActivities;
         internal ConfigEntry<bool> NoRunningStaminaDrain;
         internal ConfigEntry<bool> NoSwimmingStaminaDrain;
         internal ConfigEntry<bool> NoEncumberedStaminaDrain;
@@ -52,7 +53,7 @@ namespace InfiniteStaminaMod
 
             try
             {
-                DebugLogging = Config.Bind("General", "DebugLogging", true,
+                DebugLogging = Config.Bind("General", "DebugLogging", false,
                     new ConfigDescription("Enable all mod log messages, including debug, info, and errors.", null,
                         new ConfigurationManagerAttributes { Order = int.MaxValue }));
 
@@ -62,41 +63,49 @@ namespace InfiniteStaminaMod
                 string enabled = ConfigMigration.ReadAndRemove(Config, "Enabled");
 
                 ModEnabled = ConfigMigration.BindBoolean(Config, "ModEnabled", enabled,
-                    new ConfigDescription("Master switch for all infinite stamina features. When off, every activity uses normal stamina.", null,
+                    new ConfigDescription("Master switch. True: infinite stamina for every action unless OnlySelectedActivities is on. False: vanilla stamina for everything.", null,
                         new ConfigurationManagerAttributes { Order = 100 }));
 
                 ToggleKey = Config.Bind("General", "ToggleKey", DefaultHotKey,
                     new ConfigDescription("Hotkey to toggle the master switch. Individual activity settings are preserved.", null,
                         new ConfigurationManagerAttributes { Order = 90 }));
 
+                string activityFilters = ConfigMigration.ReadAndRemove(Config, "UseActivityFilters");
+                string movedActivityFilters = ConfigMigration.ReadAndRemove(Config, "UseActivityFilters", "Stamina Filters");
+
+                OnlySelectedActivities = ConfigMigration.BindBoolean(Config, "OnlySelectedActivities",
+                    string.IsNullOrEmpty(movedActivityFilters) ? activityFilters : movedActivityFilters,
+                    new ConfigDescription("True: infinite stamina only for the activities enabled below. False: every action is free. Requires ModEnabled.", null,
+                        new ConfigurationManagerAttributes { Order = 100 }), "Stamina Filters", false);
+
                 string running = ConfigMigration.ReadAndRemove(Config, "EnableOnlyWhileRunning");
 
-                NoRunningStaminaDrain = ConfigMigration.BindBoolean(Config, "NoRunningStaminaDrain", running,
-                    new ConfigDescription("Prevent running stamina drain. Uses its own setting while ModEnabled is on.", null,
+                NoRunningStaminaDrain = ConfigMigration.BindActivityBoolean(Config, "NoRunningStaminaDrain", running,
+                    new ConfigDescription("Prevent running stamina drain. Only applies when ModEnabled and OnlySelectedActivities are true.", null,
                         new ConfigurationManagerAttributes { Order = 80 }));
 
-                NoSwimmingStaminaDrain = Config.Bind("General", "NoSwimmingStaminaDrain", true,
-                    new ConfigDescription("Prevent swimming stamina drain while ModEnabled is on.", null,
+                NoSwimmingStaminaDrain = ConfigMigration.BindActivityBoolean(Config, "NoSwimmingStaminaDrain", string.Empty,
+                    new ConfigDescription("Prevent swimming stamina drain only when ModEnabled and OnlySelectedActivities are true.", null,
                         new ConfigurationManagerAttributes { Order = 75 }));
 
-                NoEncumberedStaminaDrain = Config.Bind("General", "NoEncumberedStaminaDrain", true,
-                    new ConfigDescription("Prevent encumbrance stamina drain when ModEnabled is on.", null,
+                NoEncumberedStaminaDrain = ConfigMigration.BindActivityBoolean(Config, "NoEncumberedStaminaDrain", string.Empty,
+                    new ConfigDescription("Prevent encumbrance stamina drain only when ModEnabled and OnlySelectedActivities are true.", null,
                         new ConfigurationManagerAttributes { Order = 70 }));
 
-                NoBuildingStaminaDrain = Config.Bind("General", "NoBuildingStaminaDrain", true,
-                    new ConfigDescription("Prevent stamina consumption from building, removing pieces, and repairs, when ModEnabled is on.", null,
+                NoBuildingStaminaDrain = ConfigMigration.BindActivityBoolean(Config, "NoBuildingStaminaDrain", string.Empty,
+                    new ConfigDescription("Prevent stamina consumption from building, removing pieces, and repairs, only when ModEnabled and OnlySelectedActivities are true.", null,
                         new ConfigurationManagerAttributes { Order = 60 }));
 
-                NoCultivatorStaminaDrain = ConfigMigration.BindBoolean(Config, "NoCultivatorStaminaDrain", farming,
-                    new ConfigDescription("Prevent stamina consumption from cultivator use and Farming skill attacks, when ModEnabled is on.", null,
+                NoCultivatorStaminaDrain = ConfigMigration.BindActivityBoolean(Config, "NoCultivatorStaminaDrain", farming,
+                    new ConfigDescription("Prevent stamina consumption from cultivator use and Farming skill attacks, only when ModEnabled and OnlySelectedActivities are true.", null,
                         new ConfigurationManagerAttributes { Order = 50 }));
 
-                NoHoeStaminaDrain = ConfigMigration.BindBoolean(Config, "NoHoeStaminaDrain", terraforming,
-                    new ConfigDescription("Prevent stamina consumption from hoe use, when ModEnabled is on.", null,
+                NoHoeStaminaDrain = ConfigMigration.BindActivityBoolean(Config, "NoHoeStaminaDrain", terraforming,
+                    new ConfigDescription("Prevent stamina consumption from hoe use, only when ModEnabled and OnlySelectedActivities are true.", null,
                         new ConfigurationManagerAttributes { Order = 40 }));
 
-                NoPickaxeStaminaDrain = ConfigMigration.BindBoolean(Config, "NoPickaxeStaminaDrain", terraforming,
-                    new ConfigDescription("Prevent stamina consumption from Pickaxes skill attacks, including digging and mining, when ModEnabled is on.", null,
+                NoPickaxeStaminaDrain = ConfigMigration.BindActivityBoolean(Config, "NoPickaxeStaminaDrain", terraforming,
+                    new ConfigDescription("Prevent stamina consumption from Pickaxes skill attacks, including digging and mining, only when ModEnabled and OnlySelectedActivities are true.", null,
                         new ConfigurationManagerAttributes { Order = 30 }));
 
                 Config.Save();
@@ -108,7 +117,7 @@ namespace InfiniteStaminaMod
 
             _staminaSettings = new[]
             {
-                ModEnabled, NoRunningStaminaDrain, NoSwimmingStaminaDrain, NoEncumberedStaminaDrain, NoBuildingStaminaDrain,
+                ModEnabled, OnlySelectedActivities, NoRunningStaminaDrain, NoSwimmingStaminaDrain, NoEncumberedStaminaDrain, NoBuildingStaminaDrain,
                 NoCultivatorStaminaDrain, NoHoeStaminaDrain, NoPickaxeStaminaDrain
             };
 

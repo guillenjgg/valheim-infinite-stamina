@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.1.3
+
+### Added
+
+- OnlySelectedActivities under Stamina Filters limits infinite stamina to the activities below.
+
+### Changed
+
+- Enabled now means no stamina use for any action by default.
+- Activity choices moved to Stamina Filters.
+- Activity filters and DebugLogging now default to false. Saved choices are kept.
+
 ## v1.1.2
 
 ### Added
