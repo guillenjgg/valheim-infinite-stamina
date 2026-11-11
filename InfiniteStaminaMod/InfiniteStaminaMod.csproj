@@ -30,13 +30,20 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Game|AnyCPU'">
+    <OutputPath>..\..\..\..\..\AppData\Roaming\com.kesomannen.gale\valheim\profiles\Dev\BepInEx\plugins\HexInfiniteStamina\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>..\..\..\bepinex_mod_libs\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="assembly_valheim_publicized">
-      <HintPath>..\..\..\publicized_assemblies\1.0-release\assembly_valheim_publicized.dll</HintPath>
+      <HintPath>..\..\..\publicized_assemblies\v1.0.21\assembly_valheim_publicized.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx">
@@ -59,16 +66,30 @@
       <HintPath>..\..\..\valheim_mod_libraries\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>..\..\..\valheim_mod_libraries\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>..\..\..\valheim_mod_libraries\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>..\..\..\valheim_mod_libraries\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InfiniteStaminaPlugin.cs" />
+    <Compile Include="Plugin.cs" />
+    <Compile Include="ConfigMigration.cs" />
+    <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="Patches\PlayerCheckRunPatch.cs" />
-    <Compile Include="Patches\PlayerHaveStaminaPatch.cs" />
-    <Compile Include="Patches\PlayerUseStaminaPatch.cs" />
+    <Compile Include="Patches\PlayerOnSwimmingPatch.cs" />
+    <Compile Include="Patches\PlayerUpdateStatsPatch.cs" />
+    <Compile Include="Patches\PlayerToolStaminaPatch.cs" />
+    <Compile Include="Patches\ActivityStamina.cs" />
+    <Compile Include="Patches\HudUpdateStaminaPatch.cs" />
+    <Compile Include="Patches\AttackToolStaminaPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
