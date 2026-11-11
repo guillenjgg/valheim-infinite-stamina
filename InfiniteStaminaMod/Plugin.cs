@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using System;
+using System.IO;
 using System.Reflection;
 using UnityEngine;
 
@@ -19,6 +20,9 @@ namespace InfiniteStaminaMod
         private static readonly KeyboardShortcut DefaultHotKey = new KeyboardShortcut(KeyCode.F6);
         private const float MessageCooldown = 0.2f;
         private Harmony _harmony;
+        private FileSystemWatcher _configWatcher;
+        private DateTime _lastConfigReloadTime;
+        private static readonly TimeSpan ConfigReloadDelay = TimeSpan.FromSeconds(1);
 
         internal static Plugin Instance { get; private set; }
         internal ConfigEntry<KeyboardShortcut> ToggleKey;
@@ -53,6 +57,7 @@ namespace InfiniteStaminaMod
                 "If true, stamina is only infinite while the player is running.");
 
             ToggleKey.SettingChanged += OnToggleKeyChanged;
+            SetupWatcher();
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony = new Harmony(PluginGuid);
@@ -91,6 +96,16 @@ namespace InfiniteStaminaMod
 
         private void OnDestroy()
         {
+            if (_configWatcher != null)
+            {
+                _configWatcher.EnableRaisingEvents = false;
+                _configWatcher.Changed -= ReadConfigValues;
+                _configWatcher.Created -= ReadConfigValues;
+                _configWatcher.Renamed -= ReadConfigValues;
+                _configWatcher.Dispose();
+                _configWatcher = null;
+            }
+
             if (ToggleKey != null)
             {
                 ToggleKey.SettingChanged -= OnToggleKeyChanged;
@@ -103,6 +118,45 @@ namespace InfiniteStaminaMod
             Log.LogInfo($"v{PluginVersion} unloaded.");
 
             Instance = null;
+        }
+
+        private void SetupWatcher()
+        {
+            _configWatcher = new FileSystemWatcher(
+                Path.GetDirectoryName(Config.ConfigFilePath),
+                Path.GetFileName(Config.ConfigFilePath));
+            _configWatcher.Changed += ReadConfigValues;
+            _configWatcher.Created += ReadConfigValues;
+            _configWatcher.Renamed += ReadConfigValues;
+            _configWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size;
+            _configWatcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
+            _configWatcher.EnableRaisingEvents = true;
+        }
+
+        private void ReadConfigValues(object sender, FileSystemEventArgs e)
+        {
+            if (_configWatcher == null || !File.Exists(Config.ConfigFilePath))
+            {
+                return;
+            }
+
+            DateTime now = DateTime.UtcNow;
+            if (now - _lastConfigReloadTime < ConfigReloadDelay)
+            {
+                return;
+            }
+
+            _lastConfigReloadTime = now;
+
+            try
+            {
+                Log.LogDebug("Attempting to reload configuration...");
+                Config.Reload();
+            }
+            catch (Exception exception)
+            {
+                Log.LogError($"There was an issue loading {Path.GetFileName(Config.ConfigFilePath)}: {exception}");
+            }
         }
 
         private bool IsGameActive()
