@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 
 namespace InfiniteStaminaMod.Patches
 {
@@ -12,9 +12,9 @@ namespace InfiniteStaminaMod.Patches
         {
             IsInsideCheckRun = false;
 
-            var plugin = InfiniteStaminaPlugin.Instance;
+            var plugin = Plugin.Instance;
 
-            if (plugin == null || !plugin.IsInfiniteStaminaEnabled || !plugin.IsEnableOnlyWhileRunning)
+            if (plugin == null || !plugin.ModEnabled.Value || !plugin.EnableOnlyWhileRunning.Value)
             {
                 return;
             }

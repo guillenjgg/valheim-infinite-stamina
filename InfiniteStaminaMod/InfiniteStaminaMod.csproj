@@ -65,7 +65,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InfiniteStaminaPlugin.cs" />
+    <Compile Include="Plugin.cs" />
     <Compile Include="Patches\PlayerCheckRunPatch.cs" />
     <Compile Include="Patches\PlayerHaveStaminaPatch.cs" />
     <Compile Include="Patches\PlayerUseStaminaPatch.cs" />

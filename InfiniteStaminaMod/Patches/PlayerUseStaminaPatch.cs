@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 
 namespace InfiniteStaminaMod.Patches
 {
@@ -8,9 +8,9 @@ namespace InfiniteStaminaMod.Patches
         [HarmonyPrefix]
         internal static bool PreventStaminaUse(Player __instance)
         {
-            var plugin = InfiniteStaminaPlugin.Instance;
+            var plugin = Plugin.Instance;
 
-            if (plugin == null || !plugin.IsInfiniteStaminaEnabled)
+            if (plugin == null || !plugin.ModEnabled.Value)
             {
                 return true;
             }
@@ -21,7 +21,7 @@ namespace InfiniteStaminaMod.Patches
             }
 
             // If EnableOnlyWhileRunning is set to false we never want to consume stamina, so prevent UseStamina from running
-            if (!plugin.IsEnableOnlyWhileRunning)
+            if (!plugin.EnableOnlyWhileRunning.Value)
             {
                 return false;
             }

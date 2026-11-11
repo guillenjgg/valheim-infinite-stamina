@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 
 namespace InfiniteStaminaMod.Patches
 {
@@ -8,14 +8,14 @@ namespace InfiniteStaminaMod.Patches
         [HarmonyPrefix]
         internal static bool ForceHaveStamina(ref bool __result, Player __instance)
         {
-            var plugin = InfiniteStaminaPlugin.Instance;
+            var plugin = Plugin.Instance;
 
-            if (plugin == null || !plugin.IsInfiniteStaminaEnabled)
+            if (plugin == null || !plugin.ModEnabled.Value)
             {
                 return true;
             }
 
-            if (plugin.IsEnableOnlyWhileRunning && !PlayerCheckRunPatch.IsInsideCheckRun)
+            if (plugin.EnableOnlyWhileRunning.Value && !PlayerCheckRunPatch.IsInsideCheckRun)
             {
                 return true;
             }

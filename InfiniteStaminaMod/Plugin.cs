@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -9,51 +9,50 @@ using UnityEngine;
 namespace InfiniteStaminaMod
 {
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
-    public class InfiniteStaminaPlugin : BaseUnityPlugin
+    public class Plugin : BaseUnityPlugin
     {
         private const string PluginGuid = "com.hex.infinitestamina";
         private const string PluginName = "HexInfiniteStamina";
         private const string PluginVersion = "1.1.2";
 
-        internal static InfiniteStaminaPlugin Instance { get; private set; }
-
-        private Harmony _harmony;
-        private ConfigEntry<KeyboardShortcut> _toggleKey;
-        private ConfigEntry<bool> _modEnabled;
-        private ConfigEntry<bool> _enableOnlyWhileRunning;
         private float _lastMessageTime;
         private static readonly KeyboardShortcut DefaultHotKey = new KeyboardShortcut(KeyCode.F6);
         private const float MessageCooldown = 0.2f;
+        private Harmony _harmony;
+
+        internal static Plugin Instance { get; private set; }
+        internal ConfigEntry<KeyboardShortcut> ToggleKey;
+        internal ConfigEntry<bool> ModEnabled;
+        internal ConfigEntry<bool> EnableOnlyWhileRunning;
+        
 
         internal static ManualLogSource Log { get; private set; }
 
-        internal bool IsInfiniteStaminaEnabled => _modEnabled != null && _modEnabled.Value;
-        internal bool IsEnableOnlyWhileRunning => _enableOnlyWhileRunning != null && _enableOnlyWhileRunning.Value;
 
         private void Awake()
         {
             Instance = this;
             Log = Logger;
 
-            _toggleKey = Config.Bind(
+            ToggleKey = Config.Bind(
                 "General",
                 "ToggleKey",
                 DefaultHotKey,
                 "Hotkey to toggle infinite stamina.");
 
-            _modEnabled = Config.Bind(
+            ModEnabled = Config.Bind(
                 "General",
                 "Enabled",
                 true,
                 "Whether infinite stamina is enabled.");
 
-            _enableOnlyWhileRunning = Config.Bind(
+            EnableOnlyWhileRunning = Config.Bind(
                 "General",
                 "EnableOnlyWhileRunning",
                 false,
                 "If true, stamina is only infinite while the player is running.");
 
-            _toggleKey.SettingChanged += OnToggleKeyChanged;
+            ToggleKey.SettingChanged += OnToggleKeyChanged;
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony = new Harmony(PluginGuid);
@@ -69,14 +68,14 @@ namespace InfiniteStaminaMod
                 return;
             }
 
-            if (!IsShortcutPressedAllowingExtraKeys(_toggleKey.Value))
+            if (!IsShortcutPressedAllowingExtraKeys(ToggleKey.Value))
             {
                 return;
             }
 
             Player player = Player.m_localPlayer;
-            _modEnabled.Value = !_modEnabled.Value;
-            bool isEnabled = _modEnabled.Value;
+            ModEnabled.Value = !ModEnabled.Value;
+            bool isEnabled = ModEnabled.Value;
 
             if (isEnabled)
             {
@@ -92,9 +91,9 @@ namespace InfiniteStaminaMod
 
         private void OnDestroy()
         {
-            if (_toggleKey != null)
+            if (ToggleKey != null)
             {
-                _toggleKey.SettingChanged -= OnToggleKeyChanged;
+                ToggleKey.SettingChanged -= OnToggleKeyChanged;
             }
 
 
@@ -136,7 +135,7 @@ namespace InfiniteStaminaMod
 
         private void OnToggleKeyChanged(object sender, EventArgs e)
         {
-            string message = $"Hotkey updated -> {_toggleKey.Value}";
+            string message = $"Hotkey updated -> {ToggleKey.Value}";
             Log.LogInfo(message);
 
             if (MessageHud.instance != null)
