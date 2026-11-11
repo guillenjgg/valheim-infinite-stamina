@@ -1,36 +1,49 @@
 using HarmonyLib;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace InfiniteStaminaMod.Patches
 {
-    [HarmonyPatch(typeof(Player), nameof(Player.CheckRun))]
+    [HarmonyPatch(typeof(Player), nameof(Player.CheckRun), new[] { typeof(UnityEngine.Vector3), typeof(float) })]
     internal static class PlayerCheckRunPatch
     {
-        internal static bool IsInsideCheckRun;
-
-        [HarmonyPrefix]
-        internal static void Prefix(Player __instance)
+        [HarmonyTranspiler]
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            IsInsideCheckRun = false;
+            MethodInfo haveStamina = AccessTools.Method(typeof(Character), nameof(Character.HaveStamina), new[] { typeof(float) });
+            MethodInfo useStamina = AccessTools.Method(typeof(Character), nameof(Character.UseStamina), new[] { typeof(float) });
 
-            var plugin = Plugin.Instance;
-
-            if (plugin == null || !plugin.ModEnabled.Value || !plugin.EnableOnlyWhileRunning.Value)
+            foreach (CodeInstruction instruction in instructions)
             {
-                return;
-            }
+                if (instruction.Calls(haveStamina))
+                {
+                    instruction.opcode = OpCodes.Call;
+                    instruction.operand = AccessTools.Method(typeof(PlayerCheckRunPatch), nameof(HaveRunStamina));
+                }
+                else if (instruction.Calls(useStamina))
+                {
+                    instruction.opcode = OpCodes.Call;
+                    instruction.operand = AccessTools.Method(typeof(PlayerCheckRunPatch), nameof(UseRunStamina));
+                }
 
-            if (Player.m_localPlayer == null || __instance != Player.m_localPlayer)
-            {
-                return;
+                yield return instruction;
             }
-
-            IsInsideCheckRun = true;
         }
 
-        [HarmonyFinalizer]
-        internal static void Finalizer()
+        private static bool IsFreeRunning(Character character)
         {
-            IsInsideCheckRun = false;
+            return PlayerToolStaminaPatch.IsLocalPlayer(character as Player) && Plugin.Instance.ModEnabled.Value && Plugin.Instance.NoRunningStaminaDrain.Value;
+        }
+
+        private static bool HaveRunStamina(Character character, float stamina)
+        {
+            return ActivityStamina.HaveStamina(character, stamina, IsFreeRunning(character));
+        }
+
+        private static void UseRunStamina(Character character, float stamina)
+        {
+            ActivityStamina.UseStamina(character, stamina, IsFreeRunning(character));
         }
     }
 }

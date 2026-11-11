@@ -4,22 +4,34 @@
 
 ### Added
 
+- Separate stamina settings for running, swimming, encumbrance, building, cultivators, hoes, and pickaxes.
+- Config hot reload and automatic migration of old settings.
+- Optional logging.
 
 ### Changed
-- Compiled against Valheim `v1.0.21`
-- Updated BepInEx dependency `denikson-BepInExPack_Valheim-5.4.2360`
+
+- ModEnabled now controls all stamina features. Each activity keeps its own setting.
+- Replaced running-only mode with NoRunningStaminaDrain.
+- Updated for Valheim `1.0.21` and BepInExPack `5.4.2360`.
 
 ## v1.1.1
 
 ### Added
-- Valheim 1.0 release update
+
+- Support for Valheim 1.0.
 
 ## v1.1.0
 
 ### Added
-- Modify mod behavior on load. Now infinite stamina will be toggled on by default.
-- Added a config option to enable infinite stamina only while running.
+
+- A running-only setting.
+
+### Changed
+
+- Infinite stamina is enabled by default.
 
 ## v1.0.0
 
-- Initial release
+### Added
+
+- Initial release.

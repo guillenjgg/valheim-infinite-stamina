@@ -21,53 +21,124 @@ namespace InfiniteStaminaMod
         private const float MessageCooldown = 0.2f;
         private Harmony _harmony;
         private FileSystemWatcher _configWatcher;
-        private DateTime _lastConfigReloadTime;
+        private DateTime _configReloadTime;
+        private bool _configReloadPending;
+        private DateTime _nextConfigPollTime;
+        private string _configFileContents;
+        private ConfigEntry<bool>[] _staminaSettings;
         private static readonly TimeSpan ConfigReloadDelay = TimeSpan.FromSeconds(1);
 
         internal static Plugin Instance { get; private set; }
         internal ConfigEntry<KeyboardShortcut> ToggleKey;
         internal ConfigEntry<bool> ModEnabled;
-        internal ConfigEntry<bool> EnableOnlyWhileRunning;
-        
+        internal ConfigEntry<bool> NoRunningStaminaDrain;
+        internal ConfigEntry<bool> NoSwimmingStaminaDrain;
+        internal ConfigEntry<bool> NoEncumberedStaminaDrain;
+        internal ConfigEntry<bool> DebugLogging;
+        internal ConfigEntry<bool> NoCultivatorStaminaDrain;
+        internal ConfigEntry<bool> NoBuildingStaminaDrain;
+        internal ConfigEntry<bool> NoHoeStaminaDrain;
+        internal ConfigEntry<bool> NoPickaxeStaminaDrain;
 
         internal static ManualLogSource Log { get; private set; }
-
 
         private void Awake()
         {
             Instance = this;
             Log = Logger;
 
-            ToggleKey = Config.Bind(
-                "General",
-                "ToggleKey",
-                DefaultHotKey,
-                "Hotkey to toggle infinite stamina.");
+            bool saveOnConfigSet = Config.SaveOnConfigSet;
+            Config.SaveOnConfigSet = false;
 
-            ModEnabled = Config.Bind(
-                "General",
-                "Enabled",
-                true,
-                "Whether infinite stamina is enabled.");
+            try
+            {
+                DebugLogging = Config.Bind("General", "DebugLogging", true,
+                    new ConfigDescription("Enable all mod log messages, including debug, info, and errors.", null,
+                        new ConfigurationManagerAttributes { Order = int.MaxValue }));
 
-            EnableOnlyWhileRunning = Config.Bind(
-                "General",
-                "EnableOnlyWhileRunning",
-                false,
-                "If true, stamina is only infinite while the player is running.");
+                string farming = ConfigMigration.ReadAndRemove(Config, "NoFarmingStaminaDrain");
+                string terraforming = ConfigMigration.ReadAndRemove(Config, "NoTerraformingStaminaDrain");
+
+                string enabled = ConfigMigration.ReadAndRemove(Config, "Enabled");
+
+                ModEnabled = ConfigMigration.BindBoolean(Config, "ModEnabled", enabled,
+                    new ConfigDescription("Master switch for all infinite stamina features. When off, every activity uses normal stamina.", null,
+                        new ConfigurationManagerAttributes { Order = 100 }));
+
+                ToggleKey = Config.Bind("General", "ToggleKey", DefaultHotKey,
+                    new ConfigDescription("Hotkey to toggle the master switch. Individual activity settings are preserved.", null,
+                        new ConfigurationManagerAttributes { Order = 90 }));
+
+                string running = ConfigMigration.ReadAndRemove(Config, "EnableOnlyWhileRunning");
+
+                NoRunningStaminaDrain = ConfigMigration.BindBoolean(Config, "NoRunningStaminaDrain", running,
+                    new ConfigDescription("Prevent running stamina drain. Uses its own setting while ModEnabled is on.", null,
+                        new ConfigurationManagerAttributes { Order = 80 }));
+
+                NoSwimmingStaminaDrain = Config.Bind("General", "NoSwimmingStaminaDrain", true,
+                    new ConfigDescription("Prevent swimming stamina drain while ModEnabled is on.", null,
+                        new ConfigurationManagerAttributes { Order = 75 }));
+
+                NoEncumberedStaminaDrain = Config.Bind("General", "NoEncumberedStaminaDrain", true,
+                    new ConfigDescription("Prevent encumbrance stamina drain when ModEnabled is on.", null,
+                        new ConfigurationManagerAttributes { Order = 70 }));
+
+                NoBuildingStaminaDrain = Config.Bind("General", "NoBuildingStaminaDrain", true,
+                    new ConfigDescription("Prevent stamina consumption from building, removing pieces, and repairs, when ModEnabled is on.", null,
+                        new ConfigurationManagerAttributes { Order = 60 }));
+
+                NoCultivatorStaminaDrain = ConfigMigration.BindBoolean(Config, "NoCultivatorStaminaDrain", farming,
+                    new ConfigDescription("Prevent stamina consumption from cultivator use and Farming skill attacks, when ModEnabled is on.", null,
+                        new ConfigurationManagerAttributes { Order = 50 }));
+
+                NoHoeStaminaDrain = ConfigMigration.BindBoolean(Config, "NoHoeStaminaDrain", terraforming,
+                    new ConfigDescription("Prevent stamina consumption from hoe use, when ModEnabled is on.", null,
+                        new ConfigurationManagerAttributes { Order = 40 }));
+
+                NoPickaxeStaminaDrain = ConfigMigration.BindBoolean(Config, "NoPickaxeStaminaDrain", terraforming,
+                    new ConfigDescription("Prevent stamina consumption from Pickaxes skill attacks, including digging and mining, when ModEnabled is on.", null,
+                        new ConfigurationManagerAttributes { Order = 30 }));
+
+                Config.Save();
+            }
+            finally
+            {
+                Config.SaveOnConfigSet = saveOnConfigSet;
+            }
+
+            _staminaSettings = new[]
+            {
+                ModEnabled, NoRunningStaminaDrain, NoSwimmingStaminaDrain, NoEncumberedStaminaDrain, NoBuildingStaminaDrain,
+                NoCultivatorStaminaDrain, NoHoeStaminaDrain, NoPickaxeStaminaDrain
+            };
+
+            foreach (ConfigEntry<bool> setting in _staminaSettings)
+            {
+                setting.SettingChanged += OnStaminaSettingChanged;
+            }
 
             ToggleKey.SettingChanged += OnToggleKeyChanged;
             SetupWatcher();
 
-            Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony = new Harmony(PluginGuid);
-            _harmony.PatchAll(assembly);
+            _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-            Log.LogInfo($"v{PluginVersion} loaded.");
+            if (DebugLogging.Value)
+            {
+                Log.LogInfo($"v{PluginVersion} loaded.");
+            }
         }
 
         private void Update()
         {
+            PollConfigChanges();
+
+            if (_configReloadPending && DateTime.UtcNow >= _configReloadTime)
+            {
+                _configReloadPending = false;
+                ReloadConfig();
+            }
+
             if (!IsGameActive())
             {
                 return;
@@ -78,18 +149,9 @@ namespace InfiniteStaminaMod
                 return;
             }
 
-            Player player = Player.m_localPlayer;
             ModEnabled.Value = !ModEnabled.Value;
-            bool isEnabled = ModEnabled.Value;
 
-            if (isEnabled)
-            {
-                float missingStamina = player.GetMaxStamina() - player.GetStamina();
-                if (missingStamina > 0f)
-                {
-                    player.AddStamina(missingStamina);
-                }
-            }
+            bool isEnabled = ModEnabled.Value;
 
             ShowStatus(isEnabled);
         }
@@ -106,6 +168,15 @@ namespace InfiniteStaminaMod
                 _configWatcher = null;
             }
 
+            if (_staminaSettings != null)
+            {
+                foreach (ConfigEntry<bool> setting in _staminaSettings)
+                {
+                    setting.SettingChanged -= OnStaminaSettingChanged;
+                }
+            }
+
+
             if (ToggleKey != null)
             {
                 ToggleKey.SettingChanged -= OnToggleKeyChanged;
@@ -115,13 +186,40 @@ namespace InfiniteStaminaMod
             _harmony?.UnpatchSelf();
             _harmony = null;
 
-            Log.LogInfo($"v{PluginVersion} unloaded.");
+            if (DebugLogging.Value)
+            {
+                Log.LogInfo($"v{PluginVersion} unloaded.");
+            }
 
             Instance = null;
         }
 
+        internal DateTime ShowStaminaUntil { get; private set; }
+
+        private void OnStaminaSettingChanged(object sender, EventArgs e)
+        {
+            Player player = Player.m_localPlayer;
+
+            if (player == null)
+            {
+                return;
+            }
+
+            SettingChangedEventArgs change = e as SettingChangedEventArgs;
+
+            if (!ModEnabled.Value && change?.ChangedSetting != ModEnabled)
+            {
+                return;
+            }
+
+            player.AddStamina(player.GetMaxStamina() - player.GetStamina());
+            ShowStaminaUntil = DateTime.UtcNow.AddSeconds(1);
+        }
+
         private void SetupWatcher()
         {
+            _configFileContents = File.ReadAllText(Config.ConfigFilePath);
+
             _configWatcher = new FileSystemWatcher(
                 Path.GetDirectoryName(Config.ConfigFilePath),
                 Path.GetFileName(Config.ConfigFilePath));
@@ -133,6 +231,38 @@ namespace InfiniteStaminaMod
             _configWatcher.EnableRaisingEvents = true;
         }
 
+        private void PollConfigChanges()
+        {
+            DateTime now = DateTime.UtcNow;
+
+            if (now < _nextConfigPollTime)
+            {
+                return;
+            }
+
+            _nextConfigPollTime = now + ConfigReloadDelay;
+
+            try
+            {
+                if (!File.Exists(Config.ConfigFilePath))
+                {
+                    return;
+                }
+
+                string contents = File.ReadAllText(Config.ConfigFilePath);
+
+                if (contents != _configFileContents)
+                {
+                    _configFileContents = contents;
+                    _configReloadTime = now + ConfigReloadDelay;
+                    _configReloadPending = true;
+                }
+            }
+            catch (IOException)
+            {
+            }
+        }
+
         private void ReadConfigValues(object sender, FileSystemEventArgs e)
         {
             if (_configWatcher == null || !File.Exists(Config.ConfigFilePath))
@@ -140,22 +270,39 @@ namespace InfiniteStaminaMod
                 return;
             }
 
-            DateTime now = DateTime.UtcNow;
-            if (now - _lastConfigReloadTime < ConfigReloadDelay)
+            _configReloadTime = DateTime.UtcNow + ConfigReloadDelay;
+            _configReloadPending = true;
+        }
+
+        private void ReloadConfig()
+        {
+            if (!File.Exists(Config.ConfigFilePath))
             {
                 return;
             }
 
-            _lastConfigReloadTime = now;
+            bool saveOnConfigSet = Config.SaveOnConfigSet;
+            Config.SaveOnConfigSet = false;
 
             try
             {
-                Log.LogDebug("Attempting to reload configuration...");
                 Config.Reload();
+
+                if (DebugLogging.Value)
+                {
+                    Log.LogInfo("Configuration reloaded.");
+                }
             }
             catch (Exception exception)
             {
-                Log.LogError($"There was an issue loading {Path.GetFileName(Config.ConfigFilePath)}: {exception}");
+                if (DebugLogging.Value)
+                {
+                    Log.LogError($"There was an issue loading {Path.GetFileName(Config.ConfigFilePath)}: {exception}");
+                }
+            }
+            finally
+            {
+                Config.SaveOnConfigSet = saveOnConfigSet;
             }
         }
 
@@ -177,7 +324,10 @@ namespace InfiniteStaminaMod
                 ? "Infinite Stamina: ENABLED"
                 : "Infinite Stamina: DISABLED";
 
-            Log.LogInfo(message);
+            if (DebugLogging.Value)
+            {
+                Log.LogInfo(message);
+            }
 
             if (MessageHud.instance != null)
             {
@@ -190,7 +340,10 @@ namespace InfiniteStaminaMod
         private void OnToggleKeyChanged(object sender, EventArgs e)
         {
             string message = $"Hotkey updated -> {ToggleKey.Value}";
-            Log.LogInfo(message);
+            if (DebugLogging.Value)
+            {
+                Log.LogInfo(message);
+            }
 
             if (MessageHud.instance != null)
             {
@@ -199,7 +352,6 @@ namespace InfiniteStaminaMod
                     message);
             }
         }
-
 
         private static bool IsShortcutPressedAllowingExtraKeys(KeyboardShortcut shortcut)
         {

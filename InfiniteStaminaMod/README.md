@@ -1,101 +1,48 @@
 # Infinite Stamina
 
-A lightweight quality-of-life mod that prevents stamina depletion.
-
----
-
-## Features
-
-- Toggle infinite stamina on/off with a hotkey
-- Instantly restores stamina when enabled
-- Optional running-only mode
-- Lightweight client-side behavior
-- No server installation required
-
----
-
-## Dependencies
-
-- BepInExPack Valheim by denikson
-
----
+Press F6 to toggle the mod. Choose which activities use no stamina.
 
 ## Installation
 
-### Using a Mod Manager (Recommended)
+Install with a mod manager, or place `InfiniteStaminaMod.dll` in `BepInEx/plugins/HexInfiniteStamina/`.
 
-Install with Thunderstore Mod Manager or r2modman.
-
-### Manual Installation
-
-1. Install BepInExPack Valheim
-2. Download this mod from Thunderstore
-3. Extract the contents into your Valheim game folder
-
-The DLL should end up here:
-
-```text
-BepInEx/plugins/HexInfiniteStamina/HexInfiniteStamina.dll
-```
-
----
-
-## Default Hotkey
-
-```text
-F6
-```
-
-The hotkey can be changed in the config file.
-
----
+Requires BepInExPack Valheim `5.4.2360` or newer.
 
 ## Configuration
 
-Config file location:
-
-```text
-BepInEx/config/com.hex.infinitestamina.cfg
-```
-
-Example configuration:
+Edit `BepInEx/config/com.hex.infinitestamina.cfg`, or use Configuration Manager. Changes apply without restarting.
 
 ```ini
 [General]
-
-## Enable or disable the mod
-# Setting type: Boolean
-# Default value: true
-Enabled = true
-
-## Toggle infinite stamina hotkey
-# Setting type: KeyboardShortcut
-# Default value: F6
+DebugLogging = true
+ModEnabled = true
 ToggleKey = F6
-
-## Enable infinite stamina only while running
-# Setting type: Boolean
-# Default value: false
-EnableWhileRunning = false
+NoRunningStaminaDrain = true
+NoSwimmingStaminaDrain = true
+NoEncumberedStaminaDrain = true
+NoBuildingStaminaDrain = true
+NoCultivatorStaminaDrain = true
+NoHoeStaminaDrain = true
+NoPickaxeStaminaDrain = true
 ```
 
----
+- `ModEnabled` is the master switch. Turn it off for normal stamina use.
+- While enabled, each activity follows its own setting: true means free stamina; false means normal cost.
+- Building includes repairs and removing pieces. Pickaxes include mining.
+- Swimming has its own NoSwimmingStaminaDrain setting. Actions without a setting, such as jumping and dodging, behave like vanilla.
+- Changing an active stamina setting refills stamina. The bar hides while infinite stamina applies.
+- `DebugLogging` controls mod logs and stays first in Configuration Manager.
 
-## Usage
-
-1. Launch Valheim with the mod installed
-2. Press `F6` (or your configured hotkey) to toggle infinite stamina
-3. A message will appear confirming the current status
-4. When enabled, stamina consumption is disabled
-
----
+Old config keys migrate automatically. Existing choices are kept.
 
 ## Multiplayer
 
--Every client needs the mod installed
+Client-side only. No server installation needed.
+
+## Support & Source
 
 ## Support & Feedback
-https://discord.gg/wU2FXD94v4
+[Discord](https://discord.gg/wU2FXD94v4)
 
 ## Source Code
-https://github.com/guillenjgg/valheim-infinite-stamina
+[GitHub](https://github.com/guillenjgg/valheim-infinite-stamina)
